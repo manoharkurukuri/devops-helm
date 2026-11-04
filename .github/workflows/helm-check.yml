@@ -1,0 +1,39 @@
+name: helm-check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "helm-notes-app/**"
+      - ".github/workflows/helm-check.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "helm-notes-app/**"
+      - ".github/workflows/helm-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4.3.1
+        with:
+          version: v3.19.0
+
+      - name: Lint and render chart
+        run: |
+          helm lint helm-notes-app --strict
+          helm template fullstack helm-notes-app --namespace devops-app > /dev/null
+          helm lint helm-notes-app --strict \
+            -f helm-notes-app/environments/dev/frontend.yaml \
+            -f helm-notes-app/environments/dev/backend.yaml
+          helm template fullstack helm-notes-app --namespace devops-app \
+            -f helm-notes-app/environments/dev/frontend.yaml \
+            -f helm-notes-app/environments/dev/backend.yaml > /dev/null
+          helm template fullstack helm-notes-app --set gateway.enabled=false > /dev/null
