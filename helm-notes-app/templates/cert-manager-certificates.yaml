@@ -1,0 +1,50 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: notes-local-ca
+  namespace: {{ .Release.Namespace }}
+spec:
+  isCA: true
+  commonName: notes-local-ca
+  subject:
+    organizations:
+      - Notes Local Lab
+
+  secretName: notes-local-ca-key
+  duration: 8760h
+  renewBefore: 720h
+
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+
+  issuerRef:
+    name: selfsigned-bootstrap
+    kind: Issuer
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: notes-app-certificate
+  namespace: {{ .Release.Namespace }}
+spec:
+  secretName: notes-app-tls
+
+  duration: 720h
+  renewBefore: 240h
+
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+
+  dnsNames:
+    - notes.test
+
+  ipAddresses:
+    - 192.168.252.13
+    - 127.0.0.1
+
+  issuerRef:
+    name: notes-ca-issuer
+    kind: Issuer

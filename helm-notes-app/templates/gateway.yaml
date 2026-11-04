@@ -37,4 +37,17 @@ spec:
       allowedRoutes:
         namespaces:
           from: Same
+    
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: notes-app-tls
+
+      allowedRoutes:
+        namespaces:
+          from: Same
 {{- end }}
