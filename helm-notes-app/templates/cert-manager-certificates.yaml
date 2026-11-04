@@ -39,6 +39,7 @@ spec:
     size: 256
 
   dnsNames:
+    - notes.app
     - notes.test
 
   ipAddresses:
