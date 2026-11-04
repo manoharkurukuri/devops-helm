@@ -1,3 +1,4 @@
+---
 backend:
   image:
-    tag: "latest"
+    tag: 41810493933-1
