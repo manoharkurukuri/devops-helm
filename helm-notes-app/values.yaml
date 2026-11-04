@@ -9,8 +9,8 @@ frontend:
     tag: "bootstrap"
     pullPolicy: IfNotPresent
   env:
-    # Browser-accessible Multipass node IP and gateway.nodePort; keep these in sync.
-    API_URL: "http://192.168.252.12:30080/api"
+    # Use a certificate-covered node IP and gateway.httpsNodePort; trust the local CA.
+    API_URL: "https://192.168.252.13:31818/api"
   resources:
     requests:
       cpu: 50m
@@ -46,6 +46,7 @@ gateway:
   enabled: true
   # Requires the existing Envoy Gateway controller and Gateway API CRDs.
   className: envoy-gateway
-  # Open http://192.168.252.12:30080 after Argo CD syncs.
-  # This port must be free cluster-wide. Both app Services remain ClusterIP.
+  # HTTP remains available; use https://192.168.252.13:31818 for TLS.
+  # These ports must be free cluster-wide. Both app Services remain ClusterIP.
   nodePort: 30080
+  httpsNodePort: 31818
