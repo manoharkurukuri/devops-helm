@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "fullstack.fullname" . }}-frontend-config
+  labels:
+    app: {{ include "fullstack.fullname" . }}-frontend
+data:
+  API_URL: {{ required "frontend.env.API_URL is required" .Values.frontend.env.API_URL | quote }}
+  {{- range $name, $value := omit .Values.frontend.env "API_URL" }}
+  {{ $name }}: {{ $value | quote }}
+  {{- end }}

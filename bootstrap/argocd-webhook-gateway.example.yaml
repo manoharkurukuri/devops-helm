@@ -1,0 +1,65 @@
+# OPTIONAL: Argo CD Git polling works without this file.
+# Requires Envoy Gateway, Gateway API CRDs, and Argo CD installed with argocd-values.yaml.
+# Local endpoint: http://192.168.252.12:30082/api/webhook (only this path is exposed).
+# GitHub cannot reach this private IP. For GitHub webhooks, use a secured public
+# HTTPS tunnel/reverse proxy and configure matching GitHub and Argo CD webhook
+# secrets privately. Do not commit credentials. This local listener is HTTP only.
+# NodePort 30082 must remain free cluster-wide. Apply separately from the Application.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: argocd-webhook-proxy
+  namespace: argocd
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyService:
+        type: NodePort
+        externalTrafficPolicy: Cluster
+        patch:
+          type: StrategicMerge
+          value:
+            spec:
+              ports:
+                - port: 80
+                  protocol: TCP
+                  nodePort: 30082
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: argocd-webhook
+  namespace: argocd
+spec:
+  gatewayClassName: envoy-gateway
+  infrastructure:
+    parametersRef:
+      group: gateway.envoyproxy.io
+      kind: EnvoyProxy
+      name: argocd-webhook-proxy
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: argocd-webhook
+  namespace: argocd
+spec:
+  parentRefs:
+    - name: argocd-webhook
+      sectionName: http
+  rules:
+    - matches:
+        - path:
+            type: Exact
+            value: /api/webhook
+      backendRefs:
+        - name: argocd-server
+          port: 80

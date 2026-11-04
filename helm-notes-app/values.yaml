@@ -1,0 +1,51 @@
+
+frontend:
+  replicaCount: 1
+  containerPort: 3000
+  service:
+    port: 80
+  image:
+    repository: "mkurukuri/notes-frontend"
+    tag: "bootstrap"
+    pullPolicy: IfNotPresent
+  env:
+    # Browser-accessible Multipass node IP and gateway.nodePort; keep these in sync.
+    API_URL: "http://192.168.252.12:30080/api"
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
+backend:
+  replicaCount: 1
+  containerPort: 8080
+  service:
+    port: 8080
+  image:
+    repository: "mkurukuri/notes-backend"
+    tag: "bootstrap"
+    pullPolicy: IfNotPresent
+  # Must provide DB_URL (MongoDB connection URI) and JWT_SECRET.
+  existingSecret: backend-secrets
+  env:
+    PORT: "8080"
+    SPRING_DATA_MONGODB_AUTO_INDEX_CREATION: "true"
+    SPRING_AUTOCONFIGURE_EXCLUDE: "org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration"
+    JWT_EXPIRATION: "60400000"
+  resources:
+    requests:
+      cpu: 250m
+      memory: 320Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+gateway:
+  enabled: true
+  # Requires the existing Envoy Gateway controller and Gateway API CRDs.
+  className: envoy-gateway
+  # Open http://192.168.252.12:30080 after Argo CD syncs.
+  # This port must be free cluster-wide. Both app Services remain ClusterIP.
+  nodePort: 30080

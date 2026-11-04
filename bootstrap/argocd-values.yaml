@@ -1,0 +1,17 @@
+# Use with the argo/argo-cd Helm chart, release name argocd, namespace argocd.
+# helm upgrade --install argocd argo/argo-cd --kube-context local \
+#   --namespace argocd --create-namespace -f bootstrap/argocd-values.yaml
+# Admin UI remains ClusterIP; access it over a loopback-only port-forward:
+# kubectl --context local -n argocd port-forward service/argocd-server 8081:80
+# Open http://localhost:8081. Do not bind the port-forward to 0.0.0.0.
+# HTTP is used behind the optional local webhook gateway; no AWS ALB is required.
+configs:
+  params:
+    server.insecure: "true"
+  cm:
+    webhook.maxPayloadSizeMB: "1"
+    # Poll Git even when no publicly reachable webhook endpoint exists.
+    timeout.reconciliation: "120s"
+server:
+  service:
+    type: ClusterIP

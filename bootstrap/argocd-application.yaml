@@ -1,0 +1,30 @@
+# Install Argo CD in the local Multipass cluster before applying:
+# kubectl --context local apply -f bootstrap/argocd-application.yaml
+# Push this chart to repoURL/main first; private repositories need Argo CD credentials.
+# backend-secrets must exist in devops-app with DB_URL and JWT_SECRET.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: fullstack-dev
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/manoharkurukuri/devops-helm.git
+    targetRevision: main
+    path: helm-notes-app
+    helm:
+      releaseName: fullstack
+      valueFiles:
+        - values.yaml
+        - environments/dev/frontend.yaml
+        - environments/dev/backend.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: devops-app
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
