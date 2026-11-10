@@ -9,6 +9,7 @@ configs:
   params:
     server.insecure: "true"
   cm:
+    kustomize.buildOptions: "--enable-helm"
     webhook.maxPayloadSizeMB: "1"
     # Poll Git even when no publicly reachable webhook endpoint exists.
     timeout.reconciliation: "120s"

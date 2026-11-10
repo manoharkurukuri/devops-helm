@@ -3,6 +3,7 @@ apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: EnvoyProxy
 metadata:
   name: {{ include "fullstack.fullname" . }}-proxy
+  namespace: {{ .Release.Namespace }}
 spec:
   provider:
     type: Kubernetes
@@ -26,6 +27,7 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: {{ include "fullstack.fullname" . }}-gateway
+  namespace: {{ .Release.Namespace }}
 spec:
   gatewayClassName: {{ .Values.gateway.className | quote }}
   infrastructure:

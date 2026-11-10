@@ -1,0 +1,60 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../../helm-notes-app
+
+namespace: devops-app-stage
+
+replicas:
+  - name: fullstack-backend
+    count: 1
+  - name: fullstack-frontend
+    count: 1
+
+images:
+  - name: mkurukuri/notes-backend
+    newTag: "41810493933-1"
+  - name: mkurukuri/notes-frontend
+    newTag: "41810485793-1"
+
+configMapGenerator:
+  - name: fullstack-frontend-config
+    namespace: devops-app-stage
+    behavior: merge
+    literals:
+      - API_URL=https://192.168.252.13:31819/api
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+replacements:
+  - source:
+      kind: ConfigMap
+      name: fullstack-frontend-config
+      fieldPath: data.API_URL
+    targets:
+      - select:
+          kind: Deployment
+          name: fullstack-frontend
+        fieldPaths:
+          - spec.template.metadata.annotations.notes-app/config-api-url
+        options:
+          create: true
+
+patches:
+  - target:
+      group: gateway.envoyproxy.io
+      version: v1alpha1
+      kind: EnvoyProxy
+      name: fullstack-proxy
+    patch: |-
+      - op: replace
+        path: /spec/provider/kubernetes/envoyService/patch/value/spec/ports
+        value:
+          - port: 80
+            protocol: TCP
+            nodePort: 30081
+          - port: 443
+            protocol: TCP
+            nodePort: 31819
