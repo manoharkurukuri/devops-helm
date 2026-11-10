@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "fullstack.fullname" . }}-frontend
+  namespace: {{ .Release.Namespace }}
   labels:
     app: {{ include "fullstack.fullname" . }}-frontend
 spec:

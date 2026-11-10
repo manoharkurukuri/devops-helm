@@ -5,11 +5,19 @@ on:
     branches: [main]
     paths:
       - "helm-notes-app/**"
+      - "kustomization.yaml"
+      - "kustomize/**"
+      - "bootstrap/**"
+      - "test/**"
       - ".github/workflows/helm-check.yml"
   pull_request:
     branches: [main]
     paths:
       - "helm-notes-app/**"
+      - "kustomization.yaml"
+      - "kustomize/**"
+      - "bootstrap/**"
+      - "test/**"
       - ".github/workflows/helm-check.yml"
   workflow_dispatch:
 
@@ -19,12 +27,36 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        helm: [v3.19.0, v4.2.1]
+    env:
+      KUSTOMIZE_VERSION: v5.8.1
     steps:
       - uses: actions/checkout@v4
 
       - uses: azure/setup-helm@v4.3.1
         with:
-          version: v3.19.0
+          version: ${{ matrix.helm }}
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3.8"
+
+      - name: Install Kustomize
+        shell: bash
+        run: |
+          set -euo pipefail
+          tool_dir="${RUNNER_TEMP}/notes-kustomize"
+          mkdir -p "$tool_dir"
+          cd "$tool_dir"
+          archive="kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz"
+          release="https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}"
+          curl --fail --silent --show-error --location "$release/$archive" -o "$archive"
+          curl --fail --silent --show-error --location "$release/checksums.txt" -o checksums.txt
+          sha256sum --check --ignore-missing checksums.txt
+          tar -xzf "$archive" kustomize
+          echo "$tool_dir" >> "$GITHUB_PATH"
 
       - name: Lint and render chart
         run: |
@@ -37,3 +69,6 @@ jobs:
             -f helm-notes-app/environments/dev/frontend.yaml \
             -f helm-notes-app/environments/dev/backend.yaml > /dev/null
           helm template fullstack helm-notes-app --set gateway.enabled=false > /dev/null
+
+      - name: Validate Kustomize environments and promotion isolation
+        run: ruby test/kustomize_test.rb

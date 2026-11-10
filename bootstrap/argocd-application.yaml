@@ -12,18 +12,13 @@ spec:
   source:
     repoURL: https://github.com/manoharkurukuri/devops-helm.git
     targetRevision: main
-    path: helm-notes-app
-    helm:
-      releaseName: fullstack
-      valueFiles:
-        - values.yaml
-        - environments/dev/frontend.yaml
-        - environments/dev/backend.yaml
+    path: kustomize/overlays/dev
   destination:
     server: https://kubernetes.default.svc
     namespace: devops-app
   syncPolicy:
     automated:
+      enabled: false
       prune: true
       selfHeal: true
     syncOptions:

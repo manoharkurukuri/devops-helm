@@ -1,0 +1,37 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../../helm-notes-app
+
+namespace: devops-app
+
+replicas:
+  - name: fullstack-backend
+    count: 1
+  - name: fullstack-frontend
+    count: 1
+
+configMapGenerator:
+  - name: fullstack-frontend-config
+    namespace: devops-app
+    behavior: merge
+    literals:
+      - API_URL=https://192.168.252.13:31818/api
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+replacements:
+  - source:
+      kind: ConfigMap
+      name: fullstack-frontend-config
+      fieldPath: data.API_URL
+    targets:
+      - select:
+          kind: Deployment
+          name: fullstack-frontend
+        fieldPaths:
+          - spec.template.metadata.annotations.notes-app/config-api-url
+        options:
+          create: true
